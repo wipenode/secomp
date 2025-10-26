@@ -58,7 +58,7 @@ all = [
 ]
 
 [project.scripts]
-secomp = "secomp.cli:cli"
+secomp = "secomp.secomp.cli:cli"
 
 [project.urls]
 Homepage = "https://github.com/wipenode/secomp"
@@ -68,11 +68,12 @@ Tracker = "https://github.com/wipenode/secomp/issues"
 Discussions = "https://github.com/wipenode/secomp/discussions"
 
 [tool.setuptools]
-packages = ["secomp"]
+packages = ["secomp", "secomp.secomp"]
 include-package-data = true
 
 [tool.setuptools.package-data]
 secomp = ["*.txt", "*.md", "*.yml", "*.yaml"]
+"secomp.secomp" = ["*.txt", "*.md", "*.yml", "*.yaml", "*.py"]
 
 [tool.black]
 line-length = 127

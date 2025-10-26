@@ -23,7 +23,11 @@ setup(
     author='Secomp Team',
     author_email='team@secomp.dev',
     url='https://github.com/secomp/secomp',
-    packages=find_packages(),
+    packages=['secomp', 'secomp.secomp'],
+    package_data={
+        'secomp': ['*.txt', '*.md', '*.yml', '*.yaml'],
+        'secomp.secomp': ['*.txt', '*.md', '*.yml', '*.yaml', '*.py']
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Information Technology',
@@ -46,7 +50,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'secomp=secomp.cli:cli',
+            'secomp=secomp.secomp.cli:cli',
         ],
     },
     include_package_data=True,
