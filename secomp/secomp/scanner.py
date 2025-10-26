@@ -4,7 +4,7 @@ AWS resource scanner for Secomp compliance checks.
 import logging
 import os
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
 
@@ -196,7 +196,7 @@ class AWSScanner:
                     risk_level=risk_level,
                     rules_checked=rules,
                     recommendations=recommendations,
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.now(timezone.utc)
                 )
 
                 findings.append(finding)
@@ -374,7 +374,7 @@ class AzureScanner:
                     risk_level=risk_level,
                     rules_checked=rules,
                     recommendations=recommendations,
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.now(timezone.utc)
                 )
 
                 findings.append(finding)
@@ -552,7 +552,7 @@ class GCPScanner:
                     risk_level=risk_level,
                     rules_checked=rules,
                     recommendations=recommendations,
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.now(timezone.utc)
                 )
 
                 findings.append(finding)

@@ -5,7 +5,7 @@ Run this after installing dependencies: pip install -r requirements.txt
 """
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add the secomp module to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'secomp', 'secomp'))
@@ -33,7 +33,7 @@ def test_models():
             risk_level=RiskLevel.LOW,
             rules_checked=[],
             recommendations=[],
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
 
         report = ComplianceReport(

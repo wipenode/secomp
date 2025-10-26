@@ -3,7 +3,7 @@ Data models for Secomp compliance reports and scanning results.
 """
 from enum import Enum
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
 
@@ -76,7 +76,7 @@ class ResourceFinding(BaseModel):
     risk_level: RiskLevel = Field(..., description="Risk level")
     rules_checked: List[ComplianceRule] = Field(..., description="Rules that were checked")
     recommendations: List[str] = Field(default_factory=list, description="Security recommendations")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="When the scan was performed")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="When the scan was performed")
 
 
 class ComplianceReport(BaseModel):
@@ -84,7 +84,7 @@ class ComplianceReport(BaseModel):
     scan_id: str = Field(..., description="Unique scan identifier")
     cloud_provider: str = Field(..., description="Cloud provider (aws, azure, gcp)")
     compliance_framework: str = Field(..., description="Compliance framework (gdpr, nis2, etc.)")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="When the scan was performed")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="When the scan was performed")
     total_resources: int = Field(..., description="Total number of resources scanned")
     compliant_resources: int = Field(..., description="Number of compliant resources")
     non_compliant_resources: int = Field(..., description="Number of non-compliant resources")

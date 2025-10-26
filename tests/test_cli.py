@@ -3,6 +3,7 @@ Unit tests for CLI functionality.
 """
 import json
 import pytest
+from datetime import datetime, timezone
 from click.testing import CliRunner
 from unittest.mock import patch, MagicMock
 
@@ -44,7 +45,7 @@ class TestCLI:
                 risk_level=RiskLevel.LOW,
                 rules_checked=[],
                 recommendations=[],
-                timestamp=__import__('datetime').datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
         ]
         mock_scanner.scan_blob_containers.return_value = mock_findings
@@ -77,7 +78,7 @@ class TestCLI:
                 risk_level=RiskLevel.LOW,
                 rules_checked=[],
                 recommendations=[],
-                timestamp=__import__('datetime').datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
         ]
         mock_scanner.scan_storage_buckets.return_value = mock_findings
@@ -124,7 +125,7 @@ class TestCLI:
                 risk_level=RiskLevel.LOW,
                 rules_checked=[],
                 recommendations=[],
-                timestamp=__import__('datetime').datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
         ]
         mock_scanner.scan_s3_buckets.return_value = mock_findings
@@ -157,7 +158,7 @@ class TestCLI:
                 risk_level=RiskLevel.MEDIUM,
                 rules_checked=[],
                 recommendations=['Fix public access'],
-                timestamp=__import__('datetime').datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
         ]
         mock_scanner.scan_s3_buckets.return_value = mock_findings
@@ -231,7 +232,7 @@ class TestComplianceReport:
                 risk_level=RiskLevel.LOW,
                 rules_checked=[],
                 recommendations=[],
-                timestamp=__import__('datetime').datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             ),
             ResourceFinding(
                 resource_id='test-bucket-2',
@@ -242,7 +243,7 @@ class TestComplianceReport:
                 risk_level=RiskLevel.HIGH,
                 rules_checked=[],
                 recommendations=['Fix encryption'],
-                timestamp=__import__('datetime').datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
         ]
 
@@ -278,7 +279,7 @@ class TestComplianceReport:
                 risk_level=RiskLevel.LOW,
                 rules_checked=[],
                 recommendations=[],
-                timestamp=__import__('datetime').datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
         ]
 
