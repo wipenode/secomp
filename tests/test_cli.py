@@ -192,7 +192,7 @@ class TestCLI:
         ])
 
         assert result.exit_code == 0  # Should not exit with error, just warn
-        assert 'not yet supported' in result.output.lower()
+        assert 'not supported' in result.output.lower()
 
     def test_scan_command_debug_mode(self):
         """Test scan command in debug mode."""

@@ -128,6 +128,8 @@ class TestAWSScanner:
         assert public_finding.risk_score > 0
         assert len(public_finding.recommendations) > 0
 
+        
+        private_finding = next(f for f in findings if f.resource_id == private_bucket)
         assert private_finding.compliance_status.value == 'compliant'
         assert private_finding.risk_score == 0 or private_finding.risk_score < 30
 

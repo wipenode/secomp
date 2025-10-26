@@ -23,9 +23,8 @@ setup(
     author='Secomp Team',
     author_email='team@secomp.dev',
     url='https://github.com/secomp/secomp',
-    packages=['secomp', 'secomp.secomp'],
+    packages=['secomp.secomp'],
     package_data={
-        'secomp': ['*.txt', '*.md', '*.yml', '*.yaml'],
         'secomp.secomp': ['*.txt', '*.md', '*.yml', '*.yaml', '*.py']
     },
     classifiers=[
