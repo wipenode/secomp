@@ -10,10 +10,10 @@ def test_multi_cloud_models():
     """Test all cloud provider data models"""
     print("🌐 Testing Multi-Cloud Data Models...")
 
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'secomp', 'secomp'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'secomp'))
 
     try:
-        from models import S3BucketDetails, AzureBlobDetails, GCPBucketDetails
+        from secomp.models import S3BucketDetails, AzureBlobDetails, GCPBucketDetails
 
         # Test AWS S3
         s3_bucket = S3BucketDetails(
@@ -65,8 +65,8 @@ def test_multi_cloud_compliance():
     print("\n🧪 Testing Multi-Cloud Compliance Rules...")
 
     try:
-        from compliance import GDPRRules
-        from models import S3BucketDetails, AzureBlobDetails, GCPBucketDetails
+        from secomp.compliance import GDPRRules
+        from secomp.models import S3BucketDetails, AzureBlobDetails, GCPBucketDetails
 
         rules = GDPRRules()
         print("✅ GDPR Rules initialized!")
@@ -133,7 +133,7 @@ def test_multi_cloud_scanners():
     print("\n🔍 Testing Multi-Cloud Scanners...")
 
     try:
-        from scanner import AWSScanner, AzureScanner, GCPScanner
+        from secomp.scanner import AWSScanner, AzureScanner, GCPScanner
 
         # Test AWS Scanner
         aws_scanner = AWSScanner(region='us-east-1', debug=True)
@@ -163,7 +163,7 @@ def test_multi_cloud_cli():
     try:
         # Test CLI options parsing
         import click
-        from cli import scan
+        from secomp.cli import scan
 
         runner = click.testing.CliRunner()
 

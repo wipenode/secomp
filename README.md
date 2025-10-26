@@ -343,9 +343,44 @@ plugin_manager.register_cloud_plugin('azure', AzureScanner)
 
 We welcome contributions! Here's how to get involved:
 
+### Option 2: From Source
+```bash
+git clone https://github.com/wipenode/secomp.git
+cd secomp
+pip install -r requirements.txt
+python -m secomp scan --help
+```
+
+### Alternative Installation Methods
+
+#### For Linux Users (Python 3.9+ recommended)
+If you encounter Rust compilation issues with pydantic:
+
+```bash
+# Option 1: Use pre-built wheels (recommended)
+pip install --only-binary=all pydantic
+
+# Option 2: Install Rust toolchain first
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+pip install secomp
+
+# Option 3: Use conda/mamba
+conda install -c conda-forge pydantic
+pip install secomp
+```
+
+#### For Windows Users
+```bash
+# Use PowerShell or Command Prompt
+pip install secomp
+
+# Or install in development mode
+pip install -e .
+```
+
 ### Development Setup
 ```bash
-# Clone the repository
 git clone https://github.com/wipenode/secomp.git
 cd secomp
 

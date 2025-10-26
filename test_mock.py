@@ -11,10 +11,10 @@ def test_models():
     print("🧪 Testing data models...")
 
     # Add module path
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'secomp', 'secomp'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'secomp'))
 
     try:
-        from secomp.secomp.models import S3BucketDetails, ComplianceStatus, RiskLevel
+        from secomp.models import S3BucketDetails, ComplianceStatus, RiskLevel
 
         # Test compliant bucket
         bucket = S3BucketDetails(
@@ -55,8 +55,8 @@ def test_compliance_rules():
     print("\n🧪 Testing compliance rules...")
 
     try:
-        from secomp.secomp.compliance import GDPRRules, RiskAssessor
-        from secomp.secomp.models import S3BucketDetails
+        from secomp.compliance import GDPRRules, RiskAssessor
+        from secomp.models import S3BucketDetails
 
         rules = GDPRRules()
         assessor = RiskAssessor()
@@ -113,7 +113,7 @@ def test_scanner_initialization():
     print("\n🧪 Testing scanner initialization...")
 
     try:
-        from secomp.secomp.scanner import AWSScanner
+        from secomp.scanner import AWSScanner
 
         # Test initialization only (without actual AWS connection)
         scanner = AWSScanner(region='us-east-1', debug=True)
@@ -133,7 +133,7 @@ def test_plugin_system():
     print("\n🧪 Testing plugin system...")
 
     try:
-        from secomp.secomp.plugins import PluginManager
+        from secomp.plugins import PluginManager
 
         manager = PluginManager()
 
