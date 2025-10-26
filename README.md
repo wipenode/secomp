@@ -8,16 +8,50 @@
 
 Secomp is a cutting-edge, open-source CLI tool designed to revolutionize cybersecurity compliance and risk assessment. In a world drowning in "tool sprawl" with an average of 45 tools per organization, Secomp emerges as the game-changer that every CISO, pentester, and DevOps engineer will download from GitHub in the first week after launch.
 
-## 🌟 Why Secomp?
+## 🚀 Quick Start
 
-- **🚀 One Command Compliance**: `secomp scan --cloud aws --compliance gdpr --output report.json`
-- **🧠 AI-Driven Risk Scoring**: Intelligent risk assessment with contextual recommendations
-- **🎨 Beautiful Terminal UI**: Colorful, interactive output with progress bars and tables
-- **🔌 Plugin Architecture**: Extensible system for new cloud providers and compliance frameworks
-- **⚡ Zero Configuration**: Works out-of-the-box with AWS credentials
+### Install in 10 seconds
+```bash
+pip install secomp
+```
+
+### Your first compliance scan
+```bash
+# AWS GDPR scan
+secomp scan --cloud aws --compliance gdpr --region us-east-1
+
+# Azure GDPR scan
+secomp scan --cloud azure --compliance gdpr --region my-resource-group
+
+# GCP GDPR scan
+secomp scan --cloud gcp --compliance gdpr --region my-project
+
+# JSON output for reports
+secomp scan --cloud aws --compliance gdpr --output report.json
+```
+
+### Test without cloud credentials
+```bash
+# Quick functionality test
+python3 test_mock.py
+
+# Multi-cloud comprehensive test
+python3 test_multicloud.py
+
+# View all available commands
+secomp --help
+```
+
+## 🌟 Key Features
+
+- **🔄 Multi-Cloud Support**: AWS S3, Azure Blob Storage, GCP Cloud Storage in one tool
+- **🧠 AI-Driven Risk Assessment**: Intelligent scoring (0-100) with contextual recommendations
+- **🎨 Beautiful Terminal UI**: Rich output with tables, progress bars, and colors
+- **⚡ Zero Configuration**: Works out-of-the-box with existing cloud credentials
+- **🔌 Plugin Architecture**: Extensible system for new providers and compliance frameworks
 - **📊 Comprehensive Reporting**: JSON reports with remediation steps and risk analysis
 
-## 🎯 Breaking the Status Quo
+## 🎯 What Makes Secomp Different
 
 Traditional tools like Checkov, Trivy, and Nmap are excellent in their niches, but none solve compliance holistically. Secomp thinks differently:
 
@@ -26,78 +60,25 @@ Traditional tools like Checkov, Trivy, and Nmap are excellent in their niches, b
 - **Developer Experience**: As intuitive as `docker run`, as powerful as ZAP in pentesting
 - **Community-Driven**: Open-source with plugin system ready for community contributions
 
-## 📦 Installation
+## 📊 Example Output
 
-### Option 1: PyPI (Recommended)
-
-#### AWS Setup
 ```bash
-# Method 1: Environment variables
-export AWS_ACCESS_KEY_ID=your_access_key
-export AWS_SECRET_ACCESS_KEY=your_secret_key
+$ secomp scan --cloud aws --compliance gdpr --region us-east-1
 
-# Method 2: AWS CLI (recommended)
-aws configure
+🔍 Scanning AWS S3 buckets for GDPR compliance...
+✅ Found 3 buckets
 
-# Method 3: IAM roles (for EC2/ECS)
-# No configuration needed - uses instance metadata
-```
+📋 Compliance Report Summary:
+┌─────────────────┬──────────────┬───────────┬────────────┬─────────────────┐
+│ Bucket Name     │ Status       │ Risk Score│ Risk Level │ Issues          │
+├─────────────────┼──────────────┼───────────┼────────────┼─────────────────┤
+│ secure-bucket   │ ✅ Compliant │ 0/100     │ LOW        │ None            │
+│ public-bucket   │ ❌ Non-Comp  │ 85/100    │ HIGH       │ Public Access   │
+│ encrypted-bucket│ ✅ Compliant │ 15/100    │ LOW        │ Encryption OK   │
+└─────────────────┴──────────────┴───────────┴────────────┴─────────────────┘
 
-#### Azure Setup
-```bash
-# Method 1: Service Principal (recommended)
-export AZURE_CLIENT_ID=your_client_id
-export AZURE_CLIENT_SECRET=your_client_secret
-export AZURE_TENANT_ID=your_tenant_id
-
-# Method 2: Azure CLI
-az login
-az account set --subscription "your-subscription-id"
-
-# Method 3: Managed Identity (for Azure VMs)
-# No configuration needed - uses managed identity
-```
-
-#### GCP Setup
-```bash
-# Method 1: Service Account Key (recommended)
-export GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
-
-# Method 2: Application Default Credentials
-gcloud auth application-default login
-
-# Method 3: Compute Engine default service account
-# No configuration needed - uses metadata service
-```
-
-### 2. Run Your First Scan
-```bash
-# AWS GDPR compliance scan
-secomp scan --cloud aws --compliance gdpr --output report.json
-
-# Azure GDPR compliance scan
-secomp scan --cloud azure --compliance gdpr --region my-resource-group
-
-# GCP GDPR compliance scan
-secomp scan --cloud gcp --compliance gdpr --region my-project-id
-
-# With debug mode for detailed insights
-secomp scan --cloud aws --compliance gdpr --debug
-
-# Custom region and format
-secomp scan --cloud azure --compliance gdpr --region production-rg --format json
-```
-
-### 3. Review Results
-```bash
-# View beautiful table output
-secomp scan --cloud aws --compliance gdpr
-
-# Save detailed JSON report
-secomp scan --cloud aws --compliance gdpr --output compliance-report.json
-
-# Interactive debug mode
-secomp scan --cloud aws --compliance gdpr --debug
+🚀 Overall Risk Score: 33/100 (LOW)
+💡 Recommendations: Review public-bucket access policies
 ```
 
 ## 📋 Command Reference
@@ -154,6 +135,68 @@ secomp plugins
 └─────────────────┴──────────────┴───────────┴────────────┴─────────────────┘
 ```
 
+## 📦 Installation
+
+### Quick Install
+```bash
+pip install secomp
+```
+
+### From Source
+```bash
+git clone https://github.com/wipenode/secomp.git
+cd secomp
+pip install -r requirements.txt
+python -m secomp scan --help
+```
+
+### Cloud Provider Setup
+
+#### AWS
+```bash
+# Method 1: Environment variables
+export AWS_ACCESS_KEY_ID=your_access_key
+export AWS_SECRET_ACCESS_KEY=your_secret_key
+
+# Method 2: AWS CLI (recommended)
+aws configure
+
+# Method 3: IAM roles (for EC2/ECS)
+# No configuration needed - uses instance metadata
+```
+
+#### Azure
+```bash
+# Service Principal (recommended)
+export AZURE_CLIENT_ID=your_client_id
+export AZURE_CLIENT_SECRET=your_client_secret
+export AZURE_TENANT_ID=your_tenant_id
+
+# Or use Azure CLI
+az login
+```
+
+#### GCP
+```bash
+# Service Account Key (recommended)
+export GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
+
+# Or use gcloud
+gcloud auth application-default login
+```
+
+### Linux Troubleshooting
+If you encounter Rust compilation issues with pydantic:
+```bash
+# Use pre-built wheels (recommended)
+pip install --only-binary=all pydantic
+
+# Or install Rust first
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+pip install secomp
+```
+
 ## 🔧 Configuration
 
 ### AWS Configuration
@@ -189,15 +232,13 @@ secomp/
 │   │   └── release.yml     # Automated releases
 │   ├── ISSUE_TEMPLATE/     # GitHub issue templates
 │   └── dependabot.yml      # Automated dependency updates
-├── docs/                   # Documentation (future)
 ├── Makefile               # Development automation
 ├── pyproject.toml         # Modern Python configuration
 ├── setup.py              # Package configuration
 ├── requirements.txt       # Dependencies
-├── README.md             # This file
-├── CHANGELOG.md          # Version history
-└── CODE_OF_CONDUCT.md    # Community guidelines
+└── README.md             # This file
 ```
+
 ## 🔄 CI/CD & Development Workflow
 
 Secomp uses modern development practices with automated testing and quality checks:
@@ -208,176 +249,6 @@ Secomp uses modern development practices with automated testing and quality chec
 - **🔒 Security**: Automated security scanning with safety and bandit
 - **📦 Releases**: Automated PyPI releases when tags are pushed
 - **🔄 Dependencies**: Weekly dependency updates via Dependabot
-
-### Development Workflow
-```bash
-# 1. Fork and clone
-git clone https://github.com/wipenode/secomp.git
-cd secomp
-
-# 2. Set up development environment
-make install-dev
-
-# 3. Create feature branch
-git checkout -b feature/your-feature-name
-
-# 4. Make changes and run tests
-make pre-commit
-
-# 5. Commit and push
-git add .
-git commit -m "Add your feature description"
-git push origin feature/your-feature-name
-
-# 6. Create Pull Request
-```
-
-### Running Tests
-```bash
-# Install test dependencies
-pip install -r requirements.txt
-
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=secomp --cov-report=html
-
-# Run tests with mocked AWS (recommended)
-pytest tests/test_scanner.py -v
-
-# Run CLI tests
-pytest tests/test_cli.py -v
-```
-
-### Testing with Real Clouds
-
-#### AWS Testing
-1. Configure AWS credentials
-2. Create a test S3 bucket: `aws s3 mb s3://secomp-test-bucket`
-3. Run scan: `secomp scan --cloud aws --compliance gdpr`
-4. Clean up: `aws s3 rb s3://secomp-test-bucket --force`
-
-#### Azure Testing
-1. Configure Azure credentials (see Configuration section)
-2. Create a test storage account: `az storage account create -n secomptest -g test-rg`
-3. Run scan: `secomp scan --cloud azure --compliance gdpr --region test-rg`
-4. Clean up: `az storage account delete -n secomptest -g test-rg`
-
-#### GCP Testing
-1. Configure GCP credentials (see Configuration section)
-2. Create a test bucket: `gsutil mb gs://secomp-test-bucket`
-3. Run scan: `secomp scan --cloud gcp --compliance gdpr --region your-project-id`
-4. Clean up: `gsutil rm -r gs://secomp-test-bucket`
-
-### Testing with Mock Services
-```bash
-# Install all cloud SDKs for full testing
-pip install boto3 azure-storage-blob google-cloud-storage moto
-
-# Run all multi-cloud tests
-pytest tests/test_scanner.py -v
-
-# Run specific cloud tests
-pytest tests/test_scanner.py::TestAzureScanner -v
-pytest tests/test_scanner.py::TestGCPScanner -v
-pytest tests/test_scanner.py::TestMultiCloudCompliance -v
-```
-
-## 🔌 Plugin Development
-
-Secomp is designed for extensibility. Create plugins for new cloud providers or compliance frameworks:
-
-### Example Plugin Structure
-```python
-# secomp/plugins/azure_scanner.py
-from secomp.plugins import CloudScannerPlugin
-
-class AzureScanner(CloudScannerPlugin):
-    def get_name(self) -> str:
-        return "Azure Blob Scanner"
-
-    def scan_resources(self, config):
-        # Implementation here
-        pass
-```
-
-### Registering Plugins
-```python
-# In your plugin's __init__.py
-from secomp.plugins import plugin_manager
-
-plugin_manager.register_cloud_plugin('azure', AzureScanner)
-```
-
-## 🗺️ Roadmap
-
-### Q1 2025 (MVP - Current)
-- ✅ AWS S3 compliance scanning
-- ✅ Azure Blob Storage compliance scanning
-- ✅ GCP Cloud Storage compliance scanning
-- ✅ GDPR compliance rules
-- ✅ AI-driven risk scoring
-- ✅ Beautiful CLI interface
-- ✅ Comprehensive testing
-
-### Q2 2025
-- 🔄 NIS2 compliance framework
-- 🔄 SOC2 compliance framework
-- 🔄 Open Policy Agent (OPA) integration
-- 🔄 Real-time monitoring mode
-
-### Q3 2025
-- 🔄 GitHub Actions integration
-- 🔄 Terraform provider
-- 🔄 Kubernetes operator
-- 🔄 Advanced AI/ML risk models
-
-### Q4 2025
-- 🔄 Multi-cloud orchestration
-- 🔄 Enterprise dashboard
-- 🔄 Compliance automation workflows
-- 🔄 Industry-specific compliance templates
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how to get involved:
-
-### Option 2: From Source
-```bash
-git clone https://github.com/wipenode/secomp.git
-cd secomp
-pip install -r requirements.txt
-python -m secomp scan --help
-```
-
-### Alternative Installation Methods
-
-#### For Linux Users (Python 3.9+ recommended)
-If you encounter Rust compilation issues with pydantic:
-
-```bash
-# Option 1: Use pre-built wheels (recommended)
-pip install --only-binary=all pydantic
-
-# Option 2: Install Rust toolchain first
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source ~/.cargo/env
-pip install secomp
-
-# Option 3: Use conda/mamba
-conda install -c conda-forge pydantic
-pip install secomp
-```
-
-#### For Windows Users
-```bash
-# Use PowerShell or Command Prompt
-pip install secomp
-
-# Or install in development mode
-pip install -e .
-```
 
 ### Development Setup
 ```bash
@@ -425,6 +296,91 @@ make build
 make help
 ```
 
+## 🧪 Testing
+
+### Mock Testing (No Cloud Credentials Needed)
+```bash
+# Quick functionality test
+python3 test_mock.py
+
+# Multi-cloud comprehensive test
+python3 test_multicloud.py
+
+# Run unit tests
+pytest tests/ -v
+```
+
+### Real Cloud Testing
+**AWS Testing**
+1. Configure AWS credentials
+2. Create a test S3 bucket: `aws s3 mb s3://secomp-test-bucket`
+3. Run scan: `secomp scan --cloud aws --compliance gdpr`
+4. Clean up: `aws s3 rb s3://secomp-test-bucket --force`
+
+**Azure Testing**
+1. Configure Azure credentials
+2. Create a test storage account: `az storage account create -n secomptest -g test-rg`
+3. Run scan: `secomp scan --cloud azure --compliance gdpr --region test-rg`
+4. Clean up: `az storage account delete -n secomptest -g test-rg`
+
+**GCP Testing**
+1. Configure GCP credentials
+2. Create a test bucket: `gsutil mb gs://secomp-test-bucket`
+3. Run scan: `secomp scan --cloud gcp --compliance gdpr --region your-project-id`
+4. Clean up: `gsutil rm -r gs://secomp-test-bucket`
+
+## 🗺️ Roadmap
+
+### Q1 2025 (MVP - Current)
+- ✅ AWS S3 compliance scanning
+- ✅ Azure Blob Storage compliance scanning
+- ✅ GCP Cloud Storage compliance scanning
+- ✅ GDPR compliance rules
+- ✅ AI-driven risk scoring
+- ✅ Beautiful CLI interface
+- ✅ Comprehensive testing
+
+### Q2 2025
+- 🔄 NIS2 compliance framework
+- 🔄 SOC2 compliance framework
+- 🔄 Open Policy Agent (OPA) integration
+- 🔄 Real-time monitoring mode
+
+### Q3 2025
+- 🔄 GitHub Actions integration
+- 🔄 Terraform provider
+- 🔄 Kubernetes operator
+- 🔄 Advanced AI/ML risk models
+
+### Q4 2025
+- 🔄 Multi-cloud orchestration
+- 🔄 Enterprise dashboard
+- 🔄 Compliance automation workflows
+- 🔄 Industry-specific compliance templates
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get involved:
+
+### Development Setup
+```bash
+git clone https://github.com/wipenode/secomp.git
+cd secomp
+
+# Set up virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install development dependencies
+make install-dev
+
+# Run tests
+make test
+
+# Run all pre-commit checks
+make pre-commit
+```
+
 ### Contribution Guidelines
 1. **Fork** the repository
 2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
@@ -459,6 +415,24 @@ Brief description of changes
 - [ ] Tests pass
 - [ ] Documentation updated
 - [ ] Changelog entry added
+```
+
+## 🔌 Plugin Development
+
+Secomp is designed for extensibility. Create plugins for new cloud providers or compliance frameworks:
+
+### Example Plugin Structure
+```python
+# secomp/plugins/custom_scanner.py
+from secomp.plugins import CloudScannerPlugin
+
+class CustomScanner(CloudScannerPlugin):
+    def get_name(self) -> str:
+        return "Custom Cloud Scanner"
+
+    def scan_resources(self, config):
+        # Implementation here
+        pass
 ```
 
 ## 📄 License
