@@ -170,6 +170,7 @@ Secomp uses standard AWS credentials in order of precedence:
 
 ## 🏗️ Architecture
 
+```
 secomp/
 ├── secomp/
 │   ├── __init__.py          # Package initialization
@@ -182,10 +183,54 @@ secomp/
 ├── tests/
 │   ├── test_scanner.py     # Multi-cloud tests with mocking
 │   └── test_cli.py         # CLI tests
-├── setup.py                # Package configuration
-├── requirements.txt        # Dependencies
-└── README.md              # This file
-## 🧪 Testing
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml          # Continuous integration
+│   │   └── release.yml     # Automated releases
+│   ├── ISSUE_TEMPLATE/     # GitHub issue templates
+│   └── dependabot.yml      # Automated dependency updates
+├── docs/                   # Documentation (future)
+├── Makefile               # Development automation
+├── pyproject.toml         # Modern Python configuration
+├── setup.py              # Package configuration
+├── requirements.txt       # Dependencies
+├── README.md             # This file
+├── CHANGELOG.md          # Version history
+└── CODE_OF_CONDUCT.md    # Community guidelines
+```
+## 🔄 CI/CD & Development Workflow
+
+Secomp uses modern development practices with automated testing and quality checks:
+
+### Automated Workflows
+- **🧪 Testing**: Multi-Python version testing (3.9, 3.10, 3.11)
+- **🔍 Code Quality**: Linting with flake8, formatting with black, type checking with mypy
+- **🔒 Security**: Automated security scanning with safety and bandit
+- **📦 Releases**: Automated PyPI releases when tags are pushed
+- **🔄 Dependencies**: Weekly dependency updates via Dependabot
+
+### Development Workflow
+```bash
+# 1. Fork and clone
+git clone https://github.com/wipenode/secomp.git
+cd secomp
+
+# 2. Set up development environment
+make install-dev
+
+# 3. Create feature branch
+git checkout -b feature/your-feature-name
+
+# 4. Make changes and run tests
+make pre-commit
+
+# 5. Commit and push
+git add .
+git commit -m "Add your feature description"
+git push origin feature/your-feature-name
+
+# 6. Create Pull Request
+```
 
 ### Running Tests
 ```bash
@@ -300,12 +345,49 @@ We welcome contributions! Here's how to get involved:
 
 ### Development Setup
 ```bash
+# Clone the repository
 git clone https://github.com/wipenode/secomp.git
 cd secomp
+
+# Set up virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-pip install -e .
+
+# Install development dependencies
+make install-dev
+
+# Run tests
+make test
+
+# Run all pre-commit checks
+make pre-commit
+```
+
+### Development Commands
+```bash
+# Install the package
+make install
+
+# Run tests with coverage
+make test-cov
+
+# Format code
+make format
+
+# Lint code
+make lint
+
+# Run security checks
+make security
+
+# Clean build artifacts
+make clean
+
+# Build package
+make build
+
+# See all available commands
+make help
 ```
 
 ### Contribution Guidelines
@@ -360,6 +442,7 @@ Secomp is open-source software licensed under the MIT License. See [LICENSE](LIC
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/wipenode/secomp/issues)
+- **Security**: [Security Policy](https://github.com/wipenode/secomp/security)
 - **Discussions**: [GitHub Discussions](https://github.com/wipenode/secomp/discussions)
 - **Email**: team@secomp.dev
 
