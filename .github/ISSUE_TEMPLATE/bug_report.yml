@@ -1,0 +1,90 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+  - type: input
+    id: version
+    attributes:
+      label: Secomp Version
+      description: What version of Secomp are you using?
+      placeholder: e.g., 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: cloud_provider
+    attributes:
+      label: Cloud Provider
+      description: Which cloud provider were you using?
+      options:
+        - AWS
+        - Azure
+        - GCP
+        - Multiple
+        - N/A
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug or unexpected behavior
+      placeholder: A clear and concise description of what happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: A clear and concise description of what you expected
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Run `secomp scan --cloud aws --compliance gdpr`
+        2. Select option X
+        3. See error message Y
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and Error Messages
+      description: Please include any relevant logs or error messages
+      render: shell
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Additional context about your environment
+      placeholder: |
+        - OS: [e.g., Ubuntu 20.04, Windows 11, macOS 13]
+        - Python version: [e.g., 3.9, 3.10, 3.11]
+        - Cloud credentials configured: [Yes/No]
+        - Using virtual environment: [Yes/No]
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues for similar problems
+          required: true
+        - label: I have provided all requested information
+          required: true
+        - label: I am willing to help debug this issue
+          required: false

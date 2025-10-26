@@ -53,8 +53,10 @@ setup(
     zip_safe=False,
     keywords='cybersecurity compliance gdpr aws azure gcp s3 blob storage risk-assessment devsecops',
     project_urls={
-        'Documentation': 'https://github.com/secomp/secomp#readme',
-        'Source': 'https://github.com/secomp/secomp',
-        'Tracker': 'https://github.com/secomp/secomp/issues',
+        'Homepage': 'https://github.com/wipenode/secomp',
+        'Documentation': 'https://github.com/wipenode/secomp#readme',
+        'Source': 'https://github.com/wipenode/secomp',
+        'Tracker': 'https://github.com/wipenode/secomp/issues',
+        'Discussions': 'https://github.com/wipenode/secomp/discussions',
     },
 )

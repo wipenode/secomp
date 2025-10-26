@@ -29,21 +29,6 @@ Traditional tools like Checkov, Trivy, and Nmap are excellent in their niches, b
 ## 📦 Installation
 
 ### Option 1: PyPI (Recommended)
-```bash
-pip install secomp
-```
-
-### Option 2: From Source
-```bash
-git clone https://github.com/secomp/secomp.git
-cd secomp
-pip install -r requirements.txt
-python -m secomp scan --help
-```
-
-## 🚀 Quick Start
-
-### 1. Configure Cloud Credentials
 
 #### AWS Setup
 ```bash
@@ -315,7 +300,7 @@ We welcome contributions! Here's how to get involved:
 
 ### Development Setup
 ```bash
-git clone https://github.com/secomp/secomp.git
+git clone https://github.com/wipenode/secomp.git
 cd secomp
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -374,8 +359,8 @@ Secomp is open-source software licensed under the MIT License. See [LICENSE](LIC
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/secomp/secomp/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/secomp/secomp/discussions)
+- **Issues**: [GitHub Issues](https://github.com/wipenode/secomp/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/wipenode/secomp/discussions)
 - **Email**: team@secomp.dev
 
 ## 🎯 Vision
