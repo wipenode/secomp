@@ -48,12 +48,12 @@ azure = [
     "azure-identity==1.15.0",
 ]
 gcp = [
-    "google-cloud-storage==2.14.0",
+    "google-cloud-storage==3.4.1",
 ]
 all = [
     "azure-storage-blob==12.19.0",
     "azure-identity==1.15.0",
-    "google-cloud-storage==2.14.0",
+    "google-cloud-storage==3.4.1",
     "pytest==7.4.3",
     "moto==5.0.0",
     "pytest-mock==3.12.0",
