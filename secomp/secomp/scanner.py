@@ -425,3 +425,18 @@ class GCPScanner:
             logger.info(f"Completed scan of {len(findings)} buckets")
 
         return findings
+
+
+def create_scanner(region: str = "us-east-1", debug: bool = False) -> AWSScanner:
+    """Factory function to create an AWS scanner."""
+    return AWSScanner(region=region, debug=debug)
+
+
+def create_azure_scanner(resource_group: str = "default", debug: bool = False) -> AzureScanner:
+    """Factory function to create an Azure scanner."""
+    return AzureScanner(resource_group=resource_group, debug=debug)
+
+
+def create_gcp_scanner(project_id: str = "default-project", debug: bool = False) -> GCPScanner:
+    """Factory function to create a GCP scanner."""
+    return GCPScanner(project_id=project_id, debug=debug)
