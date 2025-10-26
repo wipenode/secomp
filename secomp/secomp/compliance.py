@@ -3,7 +3,12 @@ GDPR compliance rules and risk assessment logic for Secomp.
 """
 import logging
 from typing import Dict, List, Any, Optional
-from .models import ComplianceStatus, ComplianceRule, RiskLevel, S3BucketDetails, AzureBlobDetails, GCPBucketDetails
+try:
+    # Try relative import first (when used as module)
+    from .models import ComplianceStatus, ComplianceRule, RiskLevel, S3BucketDetails, AzureBlobDetails, GCPBucketDetails
+except ImportError:
+    # Fall back to absolute import (when run directly)
+    from models import ComplianceStatus, ComplianceRule, RiskLevel, S3BucketDetails, AzureBlobDetails, GCPBucketDetails
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +132,7 @@ class RiskAssessor:
             "multiple_violations": 15
         }
 
-    def calculate_risk_score(self, rules: List[ComplianceRule], bucket_details: S3BucketDetails) -> tuple[int, RiskLevel]:
+    def calculate_risk_score(self, rules: List[ComplianceRule], resource_details: Any) -> tuple[int, RiskLevel]:
         """Calculate risk score based on compliance rules and bucket details."""
         score = 0
         violations = 0
@@ -162,21 +167,22 @@ class RiskAssessor:
 
         return score, risk_level
 
-    def generate_recommendations(self, rules: List[ComplianceRule], bucket_details: S3BucketDetails) -> List[str]:
+    def generate_recommendations(self, rules: List[ComplianceRule], resource_details: Any) -> List[str]:
         """Generate security recommendations based on findings."""
         recommendations = []
 
         for rule in rules:
             if rule.status == ComplianceStatus.NON_COMPLIANT:
-                if rule.rule_id == "GDPR-S3-001":
+                if rule.rule_id == "GDPR-STORAGE-001":
                     recommendations.append("Immediately block public access to prevent data breaches")
-                    recommendations.append("Review and remove any public bucket policies")
-                elif rule.rule_id == "GDPR-S3-002":
-                    recommendations.append("Enable S3 bucket encryption (AES-256 recommended)")
-                    recommendations.append("Consider using KMS for enhanced key management")
+                    recommendations.append("Review and remove any public access policies")
+                elif rule.rule_id == "GDPR-STORAGE-002":
+                    recommendations.append("Enable storage encryption")
+                    recommendations.append("Consider using managed encryption keys")
 
-        if bucket_details.public_access:
-            recommendations.append("Conduct immediate security audit of bucket contents")
+        # Check for public access
+        if hasattr(resource_details, 'public_access') and resource_details.public_access:
+            recommendations.append("Conduct immediate security audit of resource contents")
 
         if not recommendations:
             recommendations.append("No immediate actions required - maintain current security posture")

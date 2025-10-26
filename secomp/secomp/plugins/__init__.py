@@ -2,7 +2,7 @@
 Plugin system for Secomp - extensible architecture for cloud providers and compliance frameworks.
 """
 
-from typing import Dict, Type, Any
+from typing import Dict, Type, Any, Optional
 from abc import ABC, abstractmethod
 
 

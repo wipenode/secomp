@@ -3,7 +3,23 @@ Data models for Secomp compliance reports and scanning results.
 """
 from enum import Enum
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from pydantic import BaseModel, Field
+
+
+class ComplianceStatus(str, Enum):
+    """Compliance status enumeration."""
+    COMPLIANT = "compliant"
+    NON_COMPLIANT = "non_compliant"
+    UNKNOWN = "unknown"
+
+
+class RiskLevel(str, Enum):
+    """Risk level enumeration."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
 
 
 class S3BucketDetails(BaseModel):

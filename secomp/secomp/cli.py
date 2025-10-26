@@ -15,9 +15,16 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.columns import Columns
 
-from .scanner import create_scanner, create_azure_scanner, create_gcp_scanner
-from .models import ComplianceReport, ScanConfig
-from .compliance import load_rego_policy
+try:
+    # Try relative import first (when used as module)
+    from .scanner import create_scanner, create_azure_scanner, create_gcp_scanner
+    from .models import ComplianceReport, ScanConfig
+    from .compliance import load_rego_policy
+except ImportError:
+    # Fall back to absolute import (when run directly)
+    from scanner import create_scanner, create_azure_scanner, create_gcp_scanner
+    from models import ComplianceReport, ScanConfig
+    from compliance import load_rego_policy
 
 # Initialize Rich console
 console = Console()

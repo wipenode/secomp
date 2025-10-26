@@ -7,7 +7,14 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
 
-from .models import S3BucketDetails, AzureBlobDetails, GCPBucketDetails, ResourceFinding, ComplianceStatus, RiskLevel
+try:
+    # Try relative import first (when used as module)
+    from .models import S3BucketDetails, AzureBlobDetails, GCPBucketDetails, ResourceFinding, ComplianceStatus, RiskLevel
+    from .compliance import GDPRRules, RiskAssessor
+except ImportError:
+    # Fall back to absolute import (when run directly)
+    from models import S3BucketDetails, AzureBlobDetails, GCPBucketDetails, ResourceFinding, ComplianceStatus, RiskLevel
+    from compliance import GDPRRules, RiskAssessor
 
 logger = logging.getLogger(__name__)
 
