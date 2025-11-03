@@ -7,12 +7,12 @@ moto==5.0.0
 pytest-mock==3.12.0
 
 # Cloud provider SDKs
-azure-storage-blob==12.19.0
+azure-storage-blob==12.27.1
 azure-identity==1.15.0
 google-cloud-storage==2.14.0
 
 # Optional dependencies for full multi-cloud support
 # Install with: pip install azure-storage-blob google-cloud-storage azure-identity
-# azure-storage-blob==12.19.0
+# azure-storage-blob==12.27.1
 # azure-identity==1.15.0
 # google-cloud-storage==2.14.0
