@@ -44,8 +44,8 @@ setup(
     install_requires=read_requirements(),
     extras_require={
         'azure': ['azure-storage-blob==12.19.0', 'azure-identity==1.15.0'],
-        'gcp': ['google-cloud-storage==2.14.0'],
-        'all': ['azure-storage-blob==12.19.0', 'azure-identity==1.15.0', 'google-cloud-storage==2.14.0']
+        'gcp': ['google-cloud-storage==3.6.0'],
+        'all': ['azure-storage-blob==12.19.0', 'azure-identity==1.15.0', 'google-cloud-storage==3.6.0']
     },
     entry_points={
         'console_scripts': [
