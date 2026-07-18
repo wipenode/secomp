@@ -146,7 +146,7 @@ pip install secomp
 ```bash
 git clone https://github.com/wipenode/secomp.git
 cd secomp
-pip install -r requirements.txt
+pip install -e .[all]
 python -m secomp scan --help
 ```
 
@@ -167,13 +167,12 @@ aws configure
 
 #### Azure
 ```bash
-# Service Principal (recommended)
-export AZURE_CLIENT_ID=your_client_id
-export AZURE_CLIENT_SECRET=your_client_secret
-export AZURE_TENANT_ID=your_tenant_id
+# Storage account URL + DefaultAzureCredential (recommended)
+export AZURE_STORAGE_ACCOUNT_URL=https://youraccount.blob.core.windows.net
+az login  # or service principal env vars for DefaultAzureCredential
 
-# Or use Azure CLI
-az login
+# Or connection string
+export AZURE_STORAGE_CONNECTION_STRING=your_connection_string
 ```
 
 #### GCP
@@ -215,8 +214,9 @@ Secomp uses standard AWS credentials in order of precedence:
 
 ```
 secomp/
-├── secomp/
-│   ├── __init__.py          # Package initialization
+├── secomp/                 # Python package
+│   ├── __init__.py         # Package initialization
+│   ├── __main__.py         # python -m secomp entry point
 │   ├── cli.py              # Multi-cloud CLI interface
 │   ├── scanner.py          # AWS, Azure, GCP resource scanning
 │   ├── compliance.py       # Multi-cloud compliance rules
@@ -233,9 +233,8 @@ secomp/
 │   ├── ISSUE_TEMPLATE/     # GitHub issue templates
 │   └── dependabot.yml      # Automated dependency updates
 ├── Makefile               # Development automation
-├── pyproject.toml         # Modern Python configuration
-├── setup.py              # Package configuration
-├── requirements.txt       # Dependencies
+├── pyproject.toml         # Packaging and tool configuration
+├── requirements.txt       # Dependencies (dev convenience)
 └── README.md             # This file
 ```
 

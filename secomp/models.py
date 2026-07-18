@@ -36,7 +36,7 @@ class AzureBlobDetails(BaseModel):
     """Details about an Azure Blob Storage container."""
     name: str = Field(..., description="Blob container name")
     resource_group: str = Field(..., description="Azure resource group")
-    location: str = Field(..., description="Azure region/location")
+    location: Optional[str] = Field(None, description="Azure region/location (None if unknown)")
     public_access: bool = Field(..., description="Whether container has public access")
     encryption_enabled: bool = Field(..., description="Whether encryption is enabled")
     encryption_type: Optional[str] = Field(None, description="Type of encryption")
@@ -47,7 +47,7 @@ class GCPBucketDetails(BaseModel):
     """Details about a GCP Cloud Storage bucket."""
     name: str = Field(..., description="GCP bucket name")
     project_id: str = Field(..., description="GCP project ID")
-    location: str = Field(..., description="GCP region/location")
+    location: Optional[str] = Field(None, description="GCP region/location (None if unknown)")
     public_access: bool = Field(..., description="Whether bucket has public access")
     encryption_enabled: bool = Field(..., description="Whether encryption is enabled")
     encryption_type: Optional[str] = Field(None, description="Type of encryption (Google-managed or Customer-managed)")

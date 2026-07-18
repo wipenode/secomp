@@ -2,7 +2,7 @@
 Plugin system for Secomp - extensible architecture for cloud providers and compliance frameworks.
 """
 
-from typing import Dict, Type, Any, Optional
+from typing import Dict, List, Type, Any, Optional
 from abc import ABC, abstractmethod
 
 
@@ -12,17 +12,14 @@ class PluginBase(ABC):
     @abstractmethod
     def get_name(self) -> str:
         """Return plugin name."""
-        pass
 
     @abstractmethod
     def get_version(self) -> str:
         """Return plugin version."""
-        pass
 
     @abstractmethod
     def get_description(self) -> str:
         """Return plugin description."""
-        pass
 
 
 class CloudScannerPlugin(PluginBase):
@@ -31,12 +28,10 @@ class CloudScannerPlugin(PluginBase):
     @abstractmethod
     def scan_resources(self, config: Dict[str, Any]) -> Any:
         """Scan cloud resources and return findings."""
-        pass
 
     @abstractmethod
-    def get_supported_regions(self) -> list:
+    def get_supported_regions(self) -> List[str]:
         """Return list of supported regions."""
-        pass
 
 
 class CompliancePlugin(PluginBase):
@@ -45,12 +40,10 @@ class CompliancePlugin(PluginBase):
     @abstractmethod
     def check_compliance(self, resource_data: Any) -> Any:
         """Check resource compliance against framework rules."""
-        pass
 
     @abstractmethod
-    def get_rules(self) -> list:
+    def get_rules(self) -> List[Any]:
         """Return list of compliance rules."""
-        pass
 
 
 class PluginManager:
@@ -76,11 +69,11 @@ class PluginManager:
         """Get a compliance plugin by name."""
         return self.compliance_plugins.get(name)
 
-    def list_cloud_plugins(self) -> list:
+    def list_cloud_plugins(self) -> List[str]:
         """List all available cloud plugins."""
         return list(self.cloud_plugins.keys())
 
-    def list_compliance_plugins(self) -> list:
+    def list_compliance_plugins(self) -> List[str]:
         """List all available compliance plugins."""
         return list(self.compliance_plugins.keys())
 

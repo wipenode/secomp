@@ -1,5 +1,5 @@
 """
-Secomp - Revolutionary CLI for compliance and risk assessment in multi-cloud environments.
+Secomp - CLI for compliance and risk assessment in multi-cloud environments.
 """
 
 __version__ = "0.1.0"

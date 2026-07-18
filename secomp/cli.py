@@ -4,6 +4,7 @@ Command Line Interface for Secomp using Click and Rich.
 import json
 import logging
 import sys
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -12,32 +13,30 @@ from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
-from rich.text import Text
-from rich.columns import Columns
 
-try:
-    # Try relative import first (when used as module)
-    from .scanner import create_scanner, create_azure_scanner, create_gcp_scanner
-    from .models import ComplianceReport, ScanConfig
-    from .compliance import load_rego_policy
-except ImportError:
-    # Fall back to absolute import (when run directly)
-    from scanner import create_scanner, create_azure_scanner, create_gcp_scanner
-    from models import ComplianceReport, ScanConfig
-    from compliance import load_rego_policy
+from .scanner import create_scanner, create_azure_scanner, create_gcp_scanner
+from .models import ComplianceReport, ScanConfig
 
-# Initialize Rich console
+# Legacy Windows consoles default to cp1252, which cannot render the emoji
+# used in the output; fall back to replacement characters instead of crashing.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, 'reconfigure'):
+        try:
+            _stream.reconfigure(errors='replace')
+        except (OSError, ValueError):
+            pass
+
 console = Console()
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Frameworks with implemented rule engines
+IMPLEMENTED_FRAMEWORKS = {'gdpr'}
 
 
 @click.group()
 @click.version_option(version="0.1.0")
 def cli():
-    """Secomp - Revolutionary CLI for compliance and risk assessment in multi-cloud environments.
+    """Secomp - CLI for compliance and risk assessment in multi-cloud environments.
 
     Secomp scans your cloud resources for compliance violations and security risks,
     providing actionable insights to strengthen your security posture.
@@ -51,6 +50,28 @@ def cli():
         secomp scan --help
     """
     pass
+
+
+def _run_scan(cloud: str, region: str, debug: bool):
+    """Create the right scanner and return findings for the given cloud."""
+    scanners = {
+        'aws': lambda: (create_scanner(region=region, debug=debug), 'scan_s3_buckets'),
+        'azure': lambda: (create_azure_scanner(resource_group=region, debug=debug), 'scan_blob_containers'),
+        'gcp': lambda: (create_gcp_scanner(project_id=region, debug=debug), 'scan_storage_buckets'),
+    }
+
+    scanner, method_name = scanners[cloud]()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task(f"Scanning {cloud.upper()} resources...", total=1)
+        findings = getattr(scanner, method_name)()
+        progress.update(task, completed=1)
+
+    return findings
 
 
 @cli.command()
@@ -73,7 +94,7 @@ def scan(cloud: str, compliance: str, region: str, output: Optional[str],
 
     2. Scan resources for compliance violations
 
-    3. Calculate risk scores using AI-driven analysis
+    3. Calculate risk scores
 
     4. Generate detailed reports with remediation steps
 
@@ -87,11 +108,9 @@ def scan(cloud: str, compliance: str, region: str, output: Optional[str],
 
     For Azure, set up your credentials:
 
-        export AZURE_CLIENT_ID=your_client_id
+        export AZURE_STORAGE_ACCOUNT_URL=https://youraccount.blob.core.windows.net
 
-        export AZURE_CLIENT_SECRET=your_client_secret
-
-        export AZURE_TENANT_ID=your_tenant_id
+        # Or: export AZURE_STORAGE_CONNECTION_STRING=your_connection_string
 
     For GCP, authenticate with:
 
@@ -99,8 +118,16 @@ def scan(cloud: str, compliance: str, region: str, output: Optional[str],
 
         # Or use: gcloud auth application-default login
     """
+    logging.basicConfig(level=logging.DEBUG if debug else logging.WARNING)
+
+    if compliance not in IMPLEMENTED_FRAMEWORKS:
+        console.print(
+            f"[red]❌ Compliance framework '{compliance}' is not implemented yet. "
+            f"Available: {', '.join(sorted(IMPLEMENTED_FRAMEWORKS))}[/red]"
+        )
+        sys.exit(2)
+
     try:
-        # Create scan configuration
         config = ScanConfig(
             cloud_provider=cloud,
             compliance_framework=compliance,
@@ -111,76 +138,25 @@ def scan(cloud: str, compliance: str, region: str, output: Optional[str],
         if debug:
             console.print(Panel.fit(
                 "[bold blue]🔍 Debug Mode Enabled[/bold blue]\n"
-                f"Configuration: {config.dict()}",
+                f"Configuration: {config.model_dump()}",
                 title="Secomp Debug"
             ))
 
-        # Show progress
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            task = progress.add_task("Initializing scanner...", total=1)
-            progress.update(task, completed=1)
+        scan_start = time.monotonic()
+        findings = _run_scan(cloud, region, debug)
+        scan_duration = time.monotonic() - scan_start
 
-        # Create and run scanner
-        if cloud.lower() == 'aws':
-            scanner = create_scanner(region=region, debug=debug)
-
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                console=console,
-            ) as progress:
-                task = progress.add_task("Scanning AWS resources...", total=1)
-
-                findings = scanner.scan_s3_buckets()
-                progress.update(task, completed=1)
-
-        elif cloud.lower() == 'azure':
-            scanner = create_azure_scanner(resource_group=region, debug=debug)
-
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                console=console,
-            ) as progress:
-                task = progress.add_task("Scanning Azure resources...", total=1)
-
-                findings = scanner.scan_blob_containers()
-                progress.update(task, completed=1)
-
-        elif cloud.lower() == 'gcp':
-            scanner = create_gcp_scanner(project_id=region, debug=debug)
-
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                console=console,
-            ) as progress:
-                task = progress.add_task("Scanning GCP resources...", total=1)
-
-                findings = scanner.scan_storage_buckets()
-                progress.update(task, completed=1)
-
-        else:
-            console.print(f"[red]❌ Cloud provider '{cloud}' not supported[/red]")
-            return
-
-        # Generate compliance report
         total_resources = len(findings)
         compliant_resources = len([f for f in findings if f.compliance_status.value == 'compliant'])
         non_compliant_resources = total_resources - compliant_resources
 
-        # Calculate overall risk score (weighted average)
         if findings:
             overall_risk_score = sum(f.risk_score for f in findings) // len(findings)
         else:
             overall_risk_score = 0
 
         report = ComplianceReport(
-            scan_id=f"secomp-{cloud}-{compliance}-{int(__import__('time').time())}",
+            scan_id=f"secomp-{cloud}-{compliance}-{int(time.time())}",
             cloud_provider=cloud,
             compliance_framework=compliance,
             total_resources=total_resources,
@@ -189,8 +165,8 @@ def scan(cloud: str, compliance: str, region: str, output: Optional[str],
             overall_risk_score=overall_risk_score,
             findings=findings,
             summary={
-                "scan_duration_seconds": 0,  # Placeholder
-                "resources_per_second": 0,   # Placeholder
+                "scan_duration_seconds": round(scan_duration, 2),
+                "resources_per_second": round(total_resources / scan_duration, 2) if scan_duration > 0 else 0,
             }
         )
 
@@ -198,13 +174,12 @@ def scan(cloud: str, compliance: str, region: str, output: Optional[str],
         if output_format == 'table':
             display_table_report(report, debug)
         else:
-            display_json_report(report, output)
+            console.print(report.model_dump_json(indent=2))
 
         # Save to file if requested
         if output:
             save_report_to_file(report, output)
 
-        # Show next steps
         display_next_steps(compliance, non_compliant_resources)
 
     except Exception as e:
@@ -217,16 +192,17 @@ def scan(cloud: str, compliance: str, region: str, output: Optional[str],
 
 
 def display_table_report(report: ComplianceReport, debug: bool):
-    """Display scan results in a beautiful table format."""
+    """Display scan results in a table format."""
+    risk_color = 'red' if report.overall_risk_score > 60 else 'yellow' if report.overall_risk_score > 30 else 'green'
+
     console.print()
     console.print(Panel.fit(
         f"[bold green]Secomp Compliance Report[/bold green]\n"
         f"Cloud: {report.cloud_provider.upper()} | Framework: {report.compliance_framework.upper()}\n"
-        f"Risk Score: [bold {'red' if report.overall_risk_score > 60 else 'yellow' if report.overall_risk_score > 30 else 'green'}]{report.overall_risk_score}/100[/bold]",
+        f"Risk Score: [bold {risk_color}]{report.overall_risk_score}/100[/]",
         title="📊 Scan Results"
     ))
 
-    # Summary statistics
     summary_table = Table(title="📈 Summary")
     summary_table.add_column("Metric", style="cyan")
     summary_table.add_column("Value", style="white")
@@ -239,66 +215,51 @@ def display_table_report(report: ComplianceReport, debug: bool):
     console.print(summary_table)
     console.print()
 
-    # Findings table
-    if report.findings:
-        findings_table = Table(title="🔍 Resource Findings")
-        findings_table.add_column("Resource", style="cyan", no_wrap=True)
-        findings_table.add_column("Status", style="white")
-        findings_table.add_column("Risk Score", style="red")
-        findings_table.add_column("Risk Level", style="yellow")
-        findings_table.add_column("Issues", style="white")
-
-        for finding in report.findings:
-            issues = [rule.rule_name for rule in finding.rules_checked
-                     if rule.status.value == 'non_compliant']
-
-            findings_table.add_row(
-                finding.resource_id,
-                "✅ Compliant" if finding.compliance_status.value == 'compliant' else "❌ Non-Compliant",
-                f"{finding.risk_score}/100",
-                finding.risk_level.value.upper(),
-                ", ".join(issues) if issues else "None"
-            )
-
-        console.print(findings_table)
-    else:
+    if not report.findings:
         console.print("[yellow]⚠️  No resources found to scan[/yellow]")
+        return
 
-    # Recommendations
-    if report.findings:
-        recommendations = []
-        for finding in report.findings:
-            if finding.recommendations:
-                recommendations.extend(finding.recommendations)
+    findings_table = Table(title="🔍 Resource Findings")
+    findings_table.add_column("Resource", style="cyan", no_wrap=True)
+    findings_table.add_column("Status", style="white")
+    findings_table.add_column("Risk Score", style="red")
+    findings_table.add_column("Risk Level", style="yellow")
+    findings_table.add_column("Issues", style="white")
 
-        if recommendations:
-            console.print()
-            console.print(Panel.fit(
-                "\n".join(set(recommendations)),  # Remove duplicates
-                title="💡 Security Recommendations"
-            ))
+    for finding in report.findings:
+        issues = [rule.rule_name for rule in finding.rules_checked
+                  if rule.status.value == 'non_compliant']
 
+        findings_table.add_row(
+            finding.resource_id,
+            "✅ Compliant" if finding.compliance_status.value == 'compliant' else "❌ Non-Compliant",
+            f"{finding.risk_score}/100",
+            finding.risk_level.value.upper(),
+            ", ".join(issues) if issues else "None"
+        )
 
-def display_json_report(report: ComplianceReport, output_file: Optional[str]):
-    """Display or save JSON report."""
-    json_output = report.json(indent=2)
+    console.print(findings_table)
 
-    if output_file:
-        with open(output_file, 'w') as f:
-            f.write(json_output)
-        console.print(f"[green]✅ Report saved to {output_file}[/green]")
-    else:
-        console.print(json_output)
+    recommendations = []
+    for finding in report.findings:
+        recommendations.extend(finding.recommendations)
+
+    if recommendations:
+        console.print()
+        console.print(Panel.fit(
+            "\n".join(dict.fromkeys(recommendations)),  # Remove duplicates, keep order
+            title="💡 Security Recommendations"
+        ))
 
 
 def save_report_to_file(report: ComplianceReport, output_file: str):
     """Save report to JSON file."""
     try:
         output_path = Path(output_file)
-        with open(output_path, 'w') as f:
-            json.dump(report.dict(), f, indent=2, default=str)
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(report.model_dump(mode='json'), f, indent=2)
         console.print(f"[green]✅ Report saved to {output_file}[/green]")
-    except Exception as e:
+    except OSError as e:
         console.print(f"[red]❌ Failed to save report: {e}[/red]")
 
 

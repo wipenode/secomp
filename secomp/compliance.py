@@ -2,13 +2,9 @@
 GDPR compliance rules and risk assessment logic for Secomp.
 """
 import logging
-from typing import Dict, List, Any, Optional
-try:
-    # Try relative import first (when used as module)
-    from .models import ComplianceStatus, ComplianceRule, RiskLevel, S3BucketDetails, AzureBlobDetails, GCPBucketDetails
-except ImportError:
-    # Fall back to absolute import (when run directly)
-    from models import ComplianceStatus, ComplianceRule, RiskLevel, S3BucketDetails, AzureBlobDetails, GCPBucketDetails
+from typing import Dict, List, Any, Optional, Tuple
+
+from .models import ComplianceStatus, ComplianceRule, RiskLevel
 
 logger = logging.getLogger(__name__)
 
@@ -21,31 +17,31 @@ class GDPRRules:
             "GDPR-STORAGE-001": {
                 "name": "Storage Public Access Block",
                 "description": "Storage containers/buckets should not allow public access to prevent unauthorized data exposure",
-                "weight": 50  # Risk score contribution
+                "weight": 50,
             },
             "GDPR-STORAGE-002": {
                 "name": "Storage Encryption at Rest",
                 "description": "Storage containers/buckets should have encryption enabled to protect data at rest",
-                "weight": 30  # Risk score contribution
+                "weight": 30,
             },
             "GDPR-STORAGE-003": {
                 "name": "Storage Access Logging",
                 "description": "Storage containers/buckets should have access logging enabled for audit purposes",
-                "weight": 20  # Risk score contribution
-            }
+                "weight": 20,
+            },
         }
 
     def check_storage_public_access(self, resource_details: Any) -> ComplianceRule:
         """Check if storage resource has public access blocked."""
         rule_id = "GDPR-STORAGE-001"
 
-        # Handle different resource types
-        if hasattr(resource_details, 'public_access'):
-            public_access = resource_details.public_access
-        else:
-            public_access = False  # Assume compliant if we can't check
+        public_access = getattr(resource_details, 'public_access', None)
 
-        if public_access:
+        if public_access is None:
+            status = ComplianceStatus.UNKNOWN
+            details = "Public access state could not be determined"
+            remediation = "Verify public access configuration manually"
+        elif public_access:
             status = ComplianceStatus.NON_COMPLIANT
             details = "Storage resource allows public access"
             remediation = "Disable public access for the storage resource"
@@ -67,11 +63,7 @@ class GDPRRules:
         """Check if storage resource has encryption enabled."""
         rule_id = "GDPR-STORAGE-002"
 
-        # Handle different resource types
-        if hasattr(resource_details, 'encryption_enabled'):
-            encryption_enabled = resource_details.encryption_enabled
-        else:
-            encryption_enabled = False  # Assume non-compliant if we can't check
+        encryption_enabled = getattr(resource_details, 'encryption_enabled', False)
 
         if not encryption_enabled:
             status = ComplianceStatus.NON_COMPLIANT
@@ -93,69 +85,62 @@ class GDPRRules:
         )
 
     def check_storage_access_logging(self, resource_details: Any) -> ComplianceRule:
-        """Check if storage resource has access logging enabled."""
-        rule_id = "GDPR-STORAGE-003"
+        """Check if storage resource has access logging enabled.
 
-        # For MVP, we'll assume logging is not configured (placeholder)
-        # In a real implementation, this would check CloudTrail, Azure Monitor, or Cloud Logging
-        status = ComplianceStatus.UNKNOWN
-        details = "Access logging configuration not checked in MVP"
-        remediation = "Enable access logging for audit compliance"
+        MVP limitation: logging configuration is not yet checked (would require
+        CloudTrail, Azure Monitor, or Cloud Logging integration).
+        """
+        rule_id = "GDPR-STORAGE-003"
 
         return ComplianceRule(
             rule_id=rule_id,
             rule_name=self.rules[rule_id]["name"],
             description=self.rules[rule_id]["description"],
-            status=status,
-            details=details,
-            remediation=remediation
+            status=ComplianceStatus.UNKNOWN,
+            details="Access logging configuration not checked in MVP",
+            remediation="Enable access logging for audit compliance"
         )
 
     def check_all_rules(self, resource_details: Any) -> List[ComplianceRule]:
         """Check all GDPR rules for any storage resource."""
-        rules = []
-        rules.append(self.check_storage_public_access(resource_details))
-        rules.append(self.check_storage_encryption(resource_details))
-        rules.append(self.check_storage_access_logging(resource_details))
-        return rules
+        return [
+            self.check_storage_public_access(resource_details),
+            self.check_storage_encryption(resource_details),
+            self.check_storage_access_logging(resource_details),
+        ]
 
 
 class RiskAssessor:
-    """AI-driven risk assessment (placeholder with heuristics)."""
+    """Heuristic risk assessment based on rule weights."""
 
-    def __init__(self):
-        # Placeholder for AI model - in future versions this could use Hugging Face
-        self.risk_weights = {
-            "public_access": 50,
-            "no_encryption": 30,
-            "unknown_logging": 20,
-            "multiple_violations": 15
-        }
+    # Score contribution per rule when it is violated / unknown
+    RULE_WEIGHTS = {
+        "GDPR-STORAGE-001": 50,
+        "GDPR-STORAGE-002": 30,
+        "GDPR-STORAGE-003": 20,
+    }
+    MULTIPLE_VIOLATIONS_PENALTY = 15
+    # Rules whose UNKNOWN status still adds risk (unverifiable = risky)
+    UNKNOWN_COUNTS_AS_RISK = {"GDPR-STORAGE-003"}
 
-    def calculate_risk_score(self, rules: List[ComplianceRule], resource_details: Any) -> tuple[int, RiskLevel]:
-        """Calculate risk score based on compliance rules and bucket details."""
+    def calculate_risk_score(self, rules: List[ComplianceRule], resource_details: Any) -> Tuple[int, RiskLevel]:
+        """Calculate risk score based on compliance rules and resource details."""
         score = 0
         violations = 0
 
         for rule in rules:
+            weight = self.RULE_WEIGHTS.get(rule.rule_id, 0)
             if rule.status == ComplianceStatus.NON_COMPLIANT:
-                rule_id = rule.rule_id
-                if "001" in rule_id:  # Public access rule
-                    score += self.risk_weights["public_access"]
-                elif "002" in rule_id:  # Encryption rule
-                    score += self.risk_weights["no_encryption"]
+                score += weight
                 violations += 1
-            elif rule.status == ComplianceStatus.UNKNOWN:
-                score += self.risk_weights["unknown_logging"]
+            elif rule.status == ComplianceStatus.UNKNOWN and rule.rule_id in self.UNKNOWN_COUNTS_AS_RISK:
+                score += weight
 
-        # Bonus penalty for multiple violations
         if violations > 1:
-            score += self.risk_weights["multiple_violations"] * violations
+            score += self.MULTIPLE_VIOLATIONS_PENALTY * violations
 
-        # Cap at 100
         score = min(score, 100)
 
-        # Determine risk level
         if score >= 80:
             risk_level = RiskLevel.CRITICAL
         elif score >= 60:
@@ -180,8 +165,7 @@ class RiskAssessor:
                     recommendations.append("Enable storage encryption")
                     recommendations.append("Consider using managed encryption keys")
 
-        # Check for public access
-        if hasattr(resource_details, 'public_access') and resource_details.public_access:
+        if getattr(resource_details, 'public_access', False):
             recommendations.append("Conduct immediate security audit of resource contents")
 
         if not recommendations:
@@ -192,6 +176,5 @@ class RiskAssessor:
 
 def load_rego_policy(policy_path: str) -> Optional[Dict[str, Any]]:
     """Placeholder for Open Policy Agent (OPA) Rego policy loading."""
-    # In future versions, this would load and compile Rego policies
     logger.info(f"Loading Rego policy from {policy_path} (placeholder)")
     return {"status": "placeholder", "message": "OPA integration planned for v0.2.0"}

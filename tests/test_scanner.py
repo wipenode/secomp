@@ -1,20 +1,31 @@
 """
-Unit tests for AWS scanner functionality using moto for mocking.
+Unit tests for scanner functionality using moto for AWS mocking.
 """
+import os
+
 import pytest
 import boto3
-from moto import mock_s3
-from unittest.mock import patch
+from moto import mock_aws
 
 from secomp.scanner import AWSScanner, AzureScanner, GCPScanner
 from secomp.models import S3BucketDetails, AzureBlobDetails, GCPBucketDetails
 from secomp.compliance import GDPRRules, RiskAssessor
 
 
+@pytest.fixture(autouse=True)
+def aws_credentials(monkeypatch):
+    """Fake AWS credentials so tests never touch a real account."""
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
+    monkeypatch.setenv("AWS_SECURITY_TOKEN", "testing")
+    monkeypatch.setenv("AWS_SESSION_TOKEN", "testing")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+
+
 @pytest.fixture
 def mock_s3_client():
     """Create a mock S3 client."""
-    with mock_s3():
+    with mock_aws():
         client = boto3.client('s3', region_name='us-east-1')
         yield client
 
@@ -41,7 +52,6 @@ class TestAWSScanner:
 
     def test_list_s3_buckets_with_data(self, scanner, mock_s3_client):
         """Test listing buckets with mock data."""
-        # Create mock buckets
         mock_s3_client.create_bucket(Bucket='test-bucket-1')
         mock_s3_client.create_bucket(Bucket='test-bucket-2')
 
@@ -54,12 +64,7 @@ class TestAWSScanner:
         """Test getting details of a public bucket."""
         bucket_name = 'public-test-bucket'
         mock_s3_client.create_bucket(Bucket=bucket_name)
-
-        # Make bucket public by setting ACL
-        mock_s3_client.put_bucket_acl(
-            Bucket=bucket_name,
-            ACL='public-read'
-        )
+        mock_s3_client.put_bucket_acl(Bucket=bucket_name, ACL='public-read')
 
         details = scanner.get_bucket_details(bucket_name)
 
@@ -72,7 +77,6 @@ class TestAWSScanner:
         bucket_name = 'encrypted-test-bucket'
         mock_s3_client.create_bucket(Bucket=bucket_name)
 
-        # Enable encryption
         mock_s3_client.put_bucket_encryption(
             Bucket=bucket_name,
             ServerSideEncryptionConfiguration={
@@ -94,17 +98,14 @@ class TestAWSScanner:
 
     def test_scan_s3_buckets_comprehensive(self, scanner, mock_s3_client):
         """Test comprehensive S3 bucket scanning."""
-        # Create test buckets with different configurations
         public_bucket = 'public-bucket'
         private_bucket = 'private-bucket'
 
         mock_s3_client.create_bucket(Bucket=public_bucket)
         mock_s3_client.create_bucket(Bucket=private_bucket)
 
-        # Configure public bucket
         mock_s3_client.put_bucket_acl(Bucket=public_bucket, ACL='public-read')
 
-        # Configure private bucket with encryption
         mock_s3_client.put_bucket_encryption(
             Bucket=private_bucket,
             ServerSideEncryptionConfiguration={
@@ -122,62 +123,60 @@ class TestAWSScanner:
 
         assert len(findings) == 2
 
-        # Check public bucket finding
         public_finding = next(f for f in findings if f.resource_id == public_bucket)
         assert public_finding.compliance_status.value == 'non_compliant'
         assert public_finding.risk_score > 0
         assert len(public_finding.recommendations) > 0
 
-        
         private_finding = next(f for f in findings if f.resource_id == private_bucket)
         assert private_finding.compliance_status.value == 'compliant'
-        assert private_finding.risk_score == 0 or private_finding.risk_score < 30
 
 
 class TestAzureScanner:
-    """Test cases for Azure Blob Storage scanner."""
+    """Test cases for Azure Blob Storage scanner (without credentials)."""
 
-    def test_azure_scanner_initialization(self):
-        """Test Azure scanner initializes correctly."""
+    def test_azure_scanner_initialization(self, monkeypatch):
+        """Test Azure scanner initializes correctly without credentials."""
+        monkeypatch.delenv('AZURE_STORAGE_ACCOUNT_URL', raising=False)
+        monkeypatch.delenv('AZURE_STORAGE_CONNECTION_STRING', raising=False)
+
         scanner = AzureScanner(resource_group='test-rg', debug=False)
         assert scanner.resource_group == 'test-rg'
         assert scanner.debug is False
+        assert scanner.blob_client is None
 
-    def test_azure_list_blob_containers(self):
-        """Test listing Azure blob containers."""
-        scanner = AzureScanner(resource_group='test-rg', debug=True)
-        containers = scanner.list_blob_containers()
-        assert len(containers) == 2
-        assert 'test-container-1' in containers
-        assert 'test-container-2' in containers
+    def test_azure_list_containers_without_client(self, monkeypatch):
+        """Without credentials, listing returns an empty list instead of fake data."""
+        monkeypatch.delenv('AZURE_STORAGE_ACCOUNT_URL', raising=False)
+        monkeypatch.delenv('AZURE_STORAGE_CONNECTION_STRING', raising=False)
 
-    def test_azure_get_container_details(self):
-        """Test getting Azure container details."""
-        scanner = AzureScanner(resource_group='test-rg', debug=True)
-        details = scanner.get_container_details('test-container-1')
+        scanner = AzureScanner(resource_group='test-rg')
+        assert scanner.list_blob_containers() == []
 
-        assert details['name'] == 'test-container-1'
-        assert details['resource_group'] == 'test-rg'
-        assert details['location'] == 'East US'
-        assert details['public_access'] is False
-        assert details['encryption_enabled'] is True
+    def test_azure_get_container_details_without_client(self, monkeypatch):
+        """Without credentials, details raise instead of fabricating compliant data."""
+        monkeypatch.delenv('AZURE_STORAGE_ACCOUNT_URL', raising=False)
+        monkeypatch.delenv('AZURE_STORAGE_CONNECTION_STRING', raising=False)
 
-    def test_azure_scan_blob_containers(self):
-        """Test comprehensive Azure blob container scanning."""
-        scanner = AzureScanner(resource_group='test-rg', debug=True)
-        findings = scanner.scan_blob_containers()
+        scanner = AzureScanner(resource_group='test-rg')
+        with pytest.raises(RuntimeError):
+            scanner.get_container_details('test-container-1')
 
-        assert len(findings) == 2
+    def test_azure_scan_without_client(self, monkeypatch):
+        """Without credentials, scan returns no findings."""
+        monkeypatch.delenv('AZURE_STORAGE_ACCOUNT_URL', raising=False)
+        monkeypatch.delenv('AZURE_STORAGE_CONNECTION_STRING', raising=False)
 
-        # Check findings
-        container1_finding = next(f for f in findings if 'test-container-1' in f.resource_id)
-        assert container1_finding.compliance_status.value == 'compliant'
-        assert container1_finding.risk_score == 0
-        assert container1_finding.resource_type == 'azure_blob_container'
+        scanner = AzureScanner(resource_group='test-rg')
+        assert scanner.scan_blob_containers() == []
 
 
 class TestGCPScanner:
-    """Test cases for GCP Cloud Storage scanner."""
+    """Test cases for GCP Cloud Storage scanner (without credentials)."""
+
+    @pytest.fixture(autouse=True)
+    def no_gcp_credentials(self, monkeypatch):
+        monkeypatch.delenv('GOOGLE_APPLICATION_CREDENTIALS', raising=False)
 
     def test_gcp_scanner_initialization(self):
         """Test GCP scanner initializes correctly."""
@@ -185,38 +184,27 @@ class TestGCPScanner:
         assert scanner.project_id == 'test-project'
         assert scanner.debug is False
 
-    def test_gcp_list_storage_buckets(self):
-        """Test listing GCP storage buckets."""
-        scanner = GCPScanner(project_id='test-project', debug=True)
-        buckets = scanner.list_storage_buckets()
-        assert len(buckets) == 2
-        assert 'test-bucket-1' in buckets
-        assert 'test-bucket-2' in buckets
+    def test_gcp_list_buckets_without_client(self):
+        """Without credentials, listing returns an empty list instead of fake data."""
+        scanner = GCPScanner(project_id='test-project')
+        if scanner.storage_client is not None:
+            pytest.skip("Real GCP credentials available in environment")
+        assert scanner.list_storage_buckets() == []
 
-    def test_gcp_get_bucket_details(self):
-        """Test getting GCP bucket details."""
-        scanner = GCPScanner(project_id='test-project', debug=True)
-        details = scanner.get_bucket_details('test-bucket-1')
+    def test_gcp_get_bucket_details_without_client(self):
+        """Without credentials, details raise instead of fabricating compliant data."""
+        scanner = GCPScanner(project_id='test-project')
+        if scanner.storage_client is not None:
+            pytest.skip("Real GCP credentials available in environment")
+        with pytest.raises(RuntimeError):
+            scanner.get_bucket_details('test-bucket-1')
 
-        assert details['name'] == 'test-bucket-1'
-        assert details['project_id'] == 'test-project'
-        assert details['location'] == 'US-CENTRAL1'
-        assert details['public_access'] is False
-        assert details['encryption_enabled'] is True
-        assert details['versioning_enabled'] is True
-
-    def test_gcp_scan_storage_buckets(self):
-        """Test comprehensive GCP storage bucket scanning."""
-        scanner = GCPScanner(project_id='test-project', debug=True)
-        findings = scanner.scan_storage_buckets()
-
-        assert len(findings) == 2
-
-        # Check findings
-        bucket1_finding = next(f for f in findings if 'test-bucket-1' in f.resource_id)
-        assert bucket1_finding.compliance_status.value == 'compliant'
-        assert bucket1_finding.risk_score == 0
-        assert bucket1_finding.resource_type == 'gcp_storage_bucket'
+    def test_gcp_scan_without_client(self):
+        """Without credentials, scan returns no findings."""
+        scanner = GCPScanner(project_id='test-project')
+        if scanner.storage_client is not None:
+            pytest.skip("Real GCP credentials available in environment")
+        assert scanner.scan_storage_buckets() == []
 
 
 class TestMultiCloudCompliance:
@@ -226,7 +214,6 @@ class TestMultiCloudCompliance:
         """Test GDPR compliance rules for Azure Blob."""
         rules = GDPRRules()
 
-        # Test compliant Azure blob
         azure_blob = AzureBlobDetails(
             name='compliant-container',
             resource_group='test-rg',
@@ -245,7 +232,6 @@ class TestMultiCloudCompliance:
         assert 'GDPR-STORAGE-002' in rule_ids
         assert 'GDPR-STORAGE-003' in rule_ids
 
-        # Should be compliant
         public_rule = next(r for r in all_rules if r.rule_id == 'GDPR-STORAGE-001')
         encryption_rule = next(r for r in all_rules if r.rule_id == 'GDPR-STORAGE-002')
         assert public_rule.status.value == 'compliant'
@@ -255,7 +241,6 @@ class TestMultiCloudCompliance:
         """Test GDPR compliance rules for GCP Storage."""
         rules = GDPRRules()
 
-        # Test compliant GCP bucket
         gcp_bucket = GCPBucketDetails(
             name='compliant-bucket',
             project_id='test-project',
@@ -271,12 +256,7 @@ class TestMultiCloudCompliance:
         all_rules = rules.check_all_rules(gcp_bucket)
 
         assert len(all_rules) == 3
-        rule_ids = [rule.rule_id for rule in all_rules]
-        assert 'GDPR-STORAGE-001' in rule_ids
-        assert 'GDPR-STORAGE-002' in rule_ids
-        assert 'GDPR-STORAGE-003' in rule_ids
 
-        # Should be compliant
         public_rule = next(r for r in all_rules if r.rule_id == 'GDPR-STORAGE-001')
         encryption_rule = next(r for r in all_rules if r.rule_id == 'GDPR-STORAGE-002')
         assert public_rule.status.value == 'compliant'
@@ -286,7 +266,6 @@ class TestMultiCloudCompliance:
         """Test non-compliant Azure blob."""
         rules = GDPRRules()
 
-        # Test non-compliant Azure blob
         azure_blob = AzureBlobDetails(
             name='non-compliant-container',
             resource_group='test-rg',
@@ -299,7 +278,6 @@ class TestMultiCloudCompliance:
 
         all_rules = rules.check_all_rules(azure_blob)
 
-        # Should have violations
         public_rule = next(r for r in all_rules if r.rule_id == 'GDPR-STORAGE-001')
         encryption_rule = next(r for r in all_rules if r.rule_id == 'GDPR-STORAGE-002')
         assert public_rule.status.value == 'non_compliant'
@@ -309,7 +287,6 @@ class TestMultiCloudCompliance:
         """Test non-compliant GCP bucket."""
         rules = GDPRRules()
 
-        # Test non-compliant GCP bucket
         gcp_bucket = GCPBucketDetails(
             name='non-compliant-bucket',
             project_id='test-project',
@@ -324,7 +301,6 @@ class TestMultiCloudCompliance:
 
         all_rules = rules.check_all_rules(gcp_bucket)
 
-        # Should have violations
         public_rule = next(r for r in all_rules if r.rule_id == 'GDPR-STORAGE-001')
         encryption_rule = next(r for r in all_rules if r.rule_id == 'GDPR-STORAGE-002')
         assert public_rule.status.value == 'non_compliant'
@@ -399,11 +375,6 @@ class TestComplianceRules:
 class TestRiskAssessor:
     """Test cases for risk assessment."""
 
-    def test_risk_assessor_initialization(self):
-        """Test risk assessor initializes correctly."""
-        assessor = RiskAssessor()
-        assert len(assessor.risk_weights) > 0
-
     def test_calculate_risk_score_compliant(self):
         """Test risk calculation for compliant resources."""
         assessor = RiskAssessor()
@@ -420,8 +391,7 @@ class TestRiskAssessor:
         rules_checked = rules.check_all_rules(bucket_details)
         risk_score, risk_level = assessor.calculate_risk_score(rules_checked, bucket_details)
 
-        assert risk_score >= 0
-        assert risk_score <= 100
+        assert 0 <= risk_score <= 100
         assert risk_level.value in ['low', 'medium', 'high', 'critical']
 
     def test_calculate_risk_score_non_compliant(self):

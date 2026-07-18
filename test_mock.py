@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 """
-Simple test of Secomp functionality with mock data - no AWS credentials required
+Simple smoke test of Secomp functionality with mock data - no cloud credentials required.
+
+Run from the repository root: python test_mock.py
+For the full test suite use: pytest tests/ -v
 """
 import sys
-import os
-from datetime import datetime
+
+# Legacy Windows consoles default to cp1252 and crash on emoji output
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 
 def test_models():
     """Test data models"""
     print("🧪 Testing data models...")
 
-    # Add module path
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'secomp', 'secomp'))
-
     try:
-        from secomp.secomp.models import S3BucketDetails, ComplianceStatus, RiskLevel
+        from secomp.models import S3BucketDetails
 
-        # Test compliant bucket
         bucket = S3BucketDetails(
             name='test-compliant-bucket',
             region='us-east-1',
@@ -31,7 +33,6 @@ def test_models():
         print(f"   Public Access: {bucket.public_access}")
         print(f"   Encryption: {bucket.encryption_enabled} ({bucket.encryption_type})")
 
-        # Test non-compliant bucket
         public_bucket = S3BucketDetails(
             name='test-public-bucket',
             region='us-east-1',
@@ -42,7 +43,7 @@ def test_models():
 
         print("✅ Public bucket model works!")
         print(f"   Bucket: {public_bucket.name}")
-        print(f"   Risk: High (public access + no encryption)")
+        print("   Risk: High (public access + no encryption)")
 
         return True
 
@@ -50,13 +51,14 @@ def test_models():
         print(f"❌ Error in models: {e}")
         return False
 
+
 def test_compliance_rules():
     """Test compliance rules"""
     print("\n🧪 Testing compliance rules...")
 
     try:
-        from secomp.secomp.compliance import GDPRRules, RiskAssessor
-        from secomp.secomp.models import S3BucketDetails
+        from secomp.compliance import GDPRRules, RiskAssessor
+        from secomp.models import S3BucketDetails
 
         rules = GDPRRules()
         assessor = RiskAssessor()
@@ -66,41 +68,22 @@ def test_compliance_rules():
         for rule_id, rule_info in rules.rules.items():
             print(f"   - {rule_id}: {rule_info['name']}")
 
-        # Test compliant bucket
-        compliant_bucket = S3BucketDetails(
-            name='compliant-bucket',
-            region='us-east-1',
-            public_access=False,
-            encryption_enabled=True,
-            encryption_type='AES256'
-        )
+        for label, bucket in [
+            ("compliant", S3BucketDetails(
+                name='compliant-bucket', region='us-east-1',
+                public_access=False, encryption_enabled=True, encryption_type='AES256')),
+            ("non-compliant", S3BucketDetails(
+                name='non-compliant-bucket', region='us-east-1',
+                public_access=True, encryption_enabled=False, encryption_type=None)),
+        ]:
+            rules_checked = rules.check_all_rules(bucket)
+            risk_score, risk_level = assessor.calculate_risk_score(rules_checked, bucket)
+            recommendations = assessor.generate_recommendations(rules_checked, bucket)
 
-        rules_checked = rules.check_all_rules(compliant_bucket)
-        risk_score, risk_level = assessor.calculate_risk_score(rules_checked, compliant_bucket)
-        recommendations = assessor.generate_recommendations(rules_checked, compliant_bucket)
-
-        print("\n✅ Test compliant bucket:")
-        print(f"   Risk Score: {risk_score}/100")
-        print(f"   Risk Level: {risk_level.value}")
-        print(f"   Recommendations: {len(recommendations)}")
-
-        # Test non-compliant bucket
-        non_compliant_bucket = S3BucketDetails(
-            name='non-compliant-bucket',
-            region='us-east-1',
-            public_access=True,
-            encryption_enabled=False,
-            encryption_type=None
-        )
-
-        rules_checked = rules.check_all_rules(non_compliant_bucket)
-        risk_score, risk_level = assessor.calculate_risk_score(rules_checked, non_compliant_bucket)
-        recommendations = assessor.generate_recommendations(rules_checked, non_compliant_bucket)
-
-        print("\n✅ Test non-compliant bucket:")
-        print(f"   Risk Score: {risk_score}/100")
-        print(f"   Risk Level: {risk_level.value}")
-        print(f"   Recommendations: {len(recommendations)}")
+            print(f"\n✅ Test {label} bucket:")
+            print(f"   Risk Score: {risk_score}/100")
+            print(f"   Risk Level: {risk_level.value}")
+            print(f"   Recommendations: {len(recommendations)}")
 
         return True
 
@@ -108,14 +91,14 @@ def test_compliance_rules():
         print(f"❌ Error in compliance: {e}")
         return False
 
+
 def test_scanner_initialization():
     """Test scanner initialization (without AWS)"""
     print("\n🧪 Testing scanner initialization...")
 
     try:
-        from secomp.secomp.scanner import AWSScanner
+        from secomp.scanner import AWSScanner
 
-        # Test initialization only (without actual AWS connection)
         scanner = AWSScanner(region='us-east-1', debug=True)
 
         print("✅ Scanner initialization works!")
@@ -128,12 +111,13 @@ def test_scanner_initialization():
         print(f"❌ Error in scanner: {e}")
         return False
 
+
 def test_plugin_system():
     """Test plugin system"""
     print("\n🧪 Testing plugin system...")
 
     try:
-        from secomp.secomp.plugins import PluginManager
+        from secomp.plugins import PluginManager
 
         manager = PluginManager()
 
@@ -147,6 +131,7 @@ def test_plugin_system():
         print(f"❌ Error in plugin system: {e}")
         return False
 
+
 def main():
     """Run all tests"""
     print("🚀 Secomp Mock Data Tests")
@@ -159,33 +144,23 @@ def main():
         test_plugin_system
     ]
 
-    passed = 0
+    passed = sum(1 for test in tests if test())
     total = len(tests)
-
-    for test in tests:
-        if test():
-            passed += 1
 
     print("\n" + "=" * 50)
     print(f"📊 Test Results: {passed}/{total} passed")
 
     if passed == total:
         print("🎉 All tests passed! Secomp core works correctly.")
-        print("\n🔍 What was tested:")
-        print("   ✅ Data models (Pydantic)")
-        print("   ✅ GDPR compliance rules")
-        print("   ✅ Risk assessment and scoring")
-        print("   ✅ Scanner initialization")
-        print("   ✅ Plugin system")
         print("\n🚀 Next steps:")
-        print("   1. pip install boto3 moto")
-        print("   2. python3 -m pytest tests/test_scanner.py -v")
-        print("   3. Configure AWS and test: python3 -m secomp.cli scan --cloud aws --compliance gdpr")
+        print("   1. pip install -e .[test]")
+        print("   2. pytest tests/ -v")
+        print("   3. Configure AWS and test: secomp scan --cloud aws --compliance gdpr")
     else:
         print("⚠️  Some tests failed. Check errors above.")
 
     return passed == total
 
+
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    sys.exit(0 if main() else 1)
